@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: servicehub-app
+    ports:
+      - "8000:8000"
+      - "5173:5173"
+    volumes:
+      - ./:/var/www/html
+      - /var/www/html/vendor
+      - /var/www/html/node_modules
+    depends_on:
+      - db
+      - redis
+    networks:
+      - servicehub
+
+  db:
+    image: mysql:8.0
+    container_name: servicehub-db
+    environment:
+      MYSQL_DATABASE: servicehub
+      MYSQL_ROOT_PASSWORD: secret
+      MYSQL_USER: servicehub
+      MYSQL_PASSWORD: secret
+    ports:
+      - "3306:3306"
+    volumes:
+      - dbdata:/var/lib/mysql
+    networks:
+      - servicehub
+
+  redis:
+    image: redis:alpine
+    container_name: servicehub-redis
+    ports:
+      - "6379:6379"
+    networks:
+      - servicehub
+
+networks:
+  servicehub:
+    driver: bridge
+
+volumes:
+  dbdata:
