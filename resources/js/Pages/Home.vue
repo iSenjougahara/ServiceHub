@@ -1,5 +1,5 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 import { useForm, usePage, router } from '@inertiajs/vue3'
 
 const page = usePage()
@@ -67,6 +67,41 @@ const changeStatus = (ticketId, action) => {
         },
     })
 }
+
+// Filters
+const showFilters = ref(false)
+const filters = ref({
+    project: '',
+    user: '',
+    status: '',
+    priority: '',
+    date: '',
+})
+
+const clearFilters = () => {
+    filters.value = { project: '', user: '', status: '', priority: '', date: '' }
+}
+
+const filteredTickets = computed(() => {
+    let tickets = page.props.tickets || []
+    const f = filters.value
+    if (f.project) {
+        tickets = tickets.filter(t => t.project_id === Number(f.project))
+    }
+    if (f.user) {
+        tickets = tickets.filter(t => (t.user?.name || '').toLowerCase().includes(f.user.toLowerCase()))
+    }
+    if (f.status) {
+        tickets = tickets.filter(t => t.status === f.status)
+    }
+    if (f.priority) {
+        tickets = tickets.filter(t => t.priority === f.priority)
+    }
+    if (f.date) {
+        tickets = tickets.filter(t => t.created_at && t.created_at.startsWith(f.date))
+    }
+    return tickets
+})
 
 const priorityColor = (priority) => {
     const colors = { low: 'text-green-600', medium: 'text-yellow-600', high: 'text-orange-600', critical: 'text-red-600' }
@@ -261,22 +296,76 @@ const statusColor = (status) => {
 
                     <!-- Ticket list -->
                     <div v-else-if="!selectedTicket">
-                        <div class="flex items-center justify-between mb-6">
+                        <div class="flex items-center justify-between mb-4">
                             <h2 class="text-2xl font-bold">{{ isTechnician ? 'All Tickets' : 'Your Tickets' }}</h2>
-                            <button
-                                v-if="!isTechnician"
-                                @click="showCreateForm = true"
-                                class="bg-green-500 text-white px-4 py-1.5 rounded text-sm hover:bg-green-600"
-                            >
-                                + New Ticket
-                            </button>
+                            <div class="flex gap-2">
+                                <button
+                                    @click="showFilters = !showFilters"
+                                    class="border border-gray-300 text-gray-600 px-4 py-1.5 rounded text-sm hover:bg-gray-50"
+                                >
+                                    {{ showFilters ? 'Hide Filters' : 'Filters' }}
+                                </button>
+                                <button
+                                    v-if="!isTechnician"
+                                    @click="showCreateForm = true"
+                                    class="bg-green-500 text-white px-4 py-1.5 rounded text-sm hover:bg-green-600"
+                                >
+                                    + New Ticket
+                                </button>
+                            </div>
                         </div>
-                        <div v-if="page.props.tickets && page.props.tickets.length">
+
+                        <!-- Filter bar -->
+                        <div v-if="showFilters" class="grid grid-cols-2 md:grid-cols-3 gap-3 mb-4 p-4 bg-gray-50 rounded border">
+                            <div>
+                                <label class="block text-gray-500 text-xs mb-1">Project</label>
+                                <select v-model="filters.project" class="w-full px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">All</option>
+                                    <option v-for="project in page.props.projects" :key="project.id" :value="project.id">
+                                        {{ project.name }}
+                                    </option>
+                                </select>
+                            </div>
+                            <div v-if="isTechnician">
+                                <label class="block text-gray-500 text-xs mb-1">User Name</label>
+                                <input v-model="filters.user" type="text" placeholder="Search by name..." class="w-full px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            </div>
+                            <div>
+                                <label class="block text-gray-500 text-xs mb-1">Status</label>
+                                <select v-model="filters.status" class="w-full px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">All</option>
+                                    <option value="open">Open</option>
+                                    <option value="in_progress">In Progress</option>
+                                    <option value="resolved">Resolved</option>
+                                    <option value="closed">Closed</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-500 text-xs mb-1">Priority</label>
+                                <select v-model="filters.priority" class="w-full px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">All</option>
+                                    <option value="low">Low</option>
+                                    <option value="medium">Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="critical">Critical</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-gray-500 text-xs mb-1">Date</label>
+                                <input v-model="filters.date" type="date" class="w-full px-2 py-1.5 border rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500" />
+                            </div>
+                            <div class="flex items-end">
+                                <button @click="clearFilters" class="text-sm text-blue-500 hover:underline">Clear filters</button>
+                            </div>
+                        </div>
+
+                        <div v-if="filteredTickets.length">
                             <table class="w-full text-left">
                                 <thead>
                                     <tr class="border-b text-gray-500 text-sm">
                                         <th class="pb-2 pr-4">#</th>
                                         <th class="pb-2 pr-4">Title</th>
+                                        <th class="pb-2 pr-4">Project</th>
                                         <th v-if="isTechnician" class="pb-2 pr-4">Created by</th>
                                         <th class="pb-2 pr-4">Status</th>
                                         <th class="pb-2 pr-4">Priority</th>
@@ -285,13 +374,14 @@ const statusColor = (status) => {
                                 </thead>
                                 <tbody>
                                     <tr
-                                        v-for="ticket in page.props.tickets"
+                                        v-for="ticket in filteredTickets"
                                         :key="ticket.id"
                                         @click="openTicket(ticket)"
                                         class="border-b hover:bg-gray-50 cursor-pointer"
                                     >
                                         <td class="py-3 pr-4 text-gray-500">{{ ticket.id }}</td>
                                         <td class="py-3 pr-4 font-medium">{{ ticket.title }}</td>
+                                        <td class="py-3 pr-4 text-gray-600">{{ ticket.project?.name || '—' }}</td>
                                         <td v-if="isTechnician" class="py-3 pr-4 text-gray-600">{{ ticket.user?.name || '—' }}</td>
                                         <td class="py-3 pr-4">
                                             <span :class="statusColor(ticket.status)" class="px-2 py-0.5 rounded text-xs font-medium">
@@ -309,6 +399,7 @@ const statusColor = (status) => {
                             </table>
                         </div>
                         <p v-else class="text-gray-500">No tickets found.</p>
+                        <p v-if="filteredTickets.length === 0 && (page.props.tickets || []).length > 0" class="text-gray-400 text-sm mt-2">No tickets match the current filters.</p>
                     </div>
 
                     <!-- Ticket detail view -->
