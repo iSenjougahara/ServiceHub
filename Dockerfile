@@ -28,11 +28,17 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 RUN composer install --no-interaction --prefer-dist --optimize-autoloader --no-scripts
 
+COPY package.json package-lock.json ./
+RUN npm install
+
+# Copy the rest of the application
+COPY . .
+
 # Initialize Pest
 RUN ./vendor/bin/pest --init || true
 
-COPY package.json package-lock.json ./
-RUN npm install
+# Ensure proper permissions
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache || true
 
 # Copy startup script
 COPY docker/start.sh /start.sh
