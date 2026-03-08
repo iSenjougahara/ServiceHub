@@ -37,7 +37,7 @@ class DatabaseSeeder extends Seeder
         ]);
 
         // Projects
-        Project::create([
+        $serviceHub = Project::create([
             'company_id' => $acme->id,
             'name' => 'ServiceHub Internal',
             'description' => 'Internal service management platform',
@@ -46,7 +46,7 @@ class DatabaseSeeder extends Seeder
             'start_date' => '2025-01-15',
         ]);
 
-        Project::create([
+        $clientPortal = Project::create([
             'company_id' => $acme->id,
             'name' => 'Client Portal',
             'description' => 'Customer-facing portal for ticket submissions',
@@ -55,7 +55,7 @@ class DatabaseSeeder extends Seeder
             'start_date' => '2025-03-01',
         ]);
 
-        Project::create([
+        $infraMonitoring = Project::create([
             'company_id' => $globex->id,
             'name' => 'Infrastructure Monitoring',
             'description' => 'Server and network monitoring tools',
@@ -71,13 +71,16 @@ class DatabaseSeeder extends Seeder
             'password' => Hash::make('password'),
         ]);
 
-        UserProfile::create([
+        $techProfile = UserProfile::create([
             'user_id' => $technician->id,
             'phone' => '11977770000',
             'position' => 'technician',
             'department' => 'IT Support',
             'bio' => 'Senior technician with 5 years of experience.',
         ]);
+
+        // Assign technician to ServiceHub Internal and Infrastructure Monitoring
+        $techProfile->projects()->attach([$serviceHub->id, $infraMonitoring->id]);
 
         $regularUser = User::create([
             'name' => 'Maria User',

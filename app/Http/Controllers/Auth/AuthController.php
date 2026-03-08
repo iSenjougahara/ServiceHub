@@ -46,9 +46,11 @@ class AuthController extends Controller
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users'],
             'password' => ['required', 'confirmed', Password::defaults()],
             'phone' => ['nullable', 'string', 'max:255'],
-            'position' => ['nullable', 'string', 'max:255'],
+            'position' => ['nullable', 'string', 'in:support,technician,manager'],
             'department' => ['nullable', 'string', 'max:255'],
             'bio' => ['nullable', 'string'],
+            'project_ids' => ['nullable', 'array'],
+            'project_ids.*' => ['exists:projects,id'],
         ]);
 
         $user = User::create([
@@ -57,12 +59,16 @@ class AuthController extends Controller
             'password' => Hash::make($validated['password']),
         ]);
 
-        $user->profile()->create([
+        $profile = $user->profile()->create([
             'phone' => $validated['phone'] ?? null,
             'position' => $validated['position'] ?? null,
             'department' => $validated['department'] ?? null,
             'bio' => $validated['bio'] ?? null,
         ]);
+
+        if (($validated['position'] ?? null) === 'technician' && !empty($validated['project_ids'])) {
+            $profile->projects()->attach($validated['project_ids']);
+        }
 
         Auth::login($user);
 

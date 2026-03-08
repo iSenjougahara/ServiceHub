@@ -58,6 +58,16 @@ const closeTicket = () => {
     ticketDetail.value = null
 }
 
+const changeStatus = (ticketId, action) => {
+    router.post(`/tickets/${ticketId}/${action}`, {}, {
+        preserveScroll: true,
+        onSuccess: () => {
+            selectedTicket.value = null
+            ticketDetail.value = null
+        },
+    })
+}
+
 const priorityColor = (priority) => {
     const colors = { low: 'text-green-600', medium: 'text-yellow-600', high: 'text-orange-600', critical: 'text-red-600' }
     return colors[priority] || 'text-gray-600'
@@ -312,6 +322,31 @@ const statusColor = (status) => {
                             <span :class="priorityColor(selectedTicket.priority)" class="font-medium text-sm capitalize">
                                 {{ selectedTicket.priority }}
                             </span>
+                        </div>
+
+                        <!-- Status action buttons (technician only) -->
+                        <div v-if="isTechnician && (selectedTicket.status === 'open' || selectedTicket.status === 'in_progress')" class="flex gap-3 mb-6">
+                            <button
+                                v-if="selectedTicket.status === 'open'"
+                                @click="changeStatus(selectedTicket.id, 'take')"
+                                class="bg-yellow-500 text-white px-4 py-1.5 rounded text-sm hover:bg-yellow-600"
+                            >
+                                Take Ticket
+                            </button>
+                            <button
+                                v-if="selectedTicket.status === 'open' || selectedTicket.status === 'in_progress'"
+                                @click="changeStatus(selectedTicket.id, 'resolve')"
+                                class="bg-green-500 text-white px-4 py-1.5 rounded text-sm hover:bg-green-600"
+                            >
+                                Resolve Ticket
+                            </button>
+                            <button
+                                v-if="selectedTicket.status === 'open' || selectedTicket.status === 'in_progress'"
+                                @click="changeStatus(selectedTicket.id, 'close')"
+                                class="bg-gray-500 text-white px-4 py-1.5 rounded text-sm hover:bg-gray-600"
+                            >
+                                Close Ticket
+                            </button>
                         </div>
 
                         <div class="mb-6">

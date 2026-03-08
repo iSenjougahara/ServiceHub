@@ -1,6 +1,8 @@
 <script setup>
-import { useForm } from '@inertiajs/vue3'
+import { useForm, usePage } from '@inertiajs/vue3'
 import { Link } from '@inertiajs/vue3'
+
+const page = usePage()
 
 const form = useForm({
     name: '',
@@ -11,6 +13,7 @@ const form = useForm({
     position: '',
     department: '',
     bio: '',
+    project_ids: [],
 })
 
 const submit = () => {
@@ -87,13 +90,33 @@ const submit = () => {
 
                 <div class="mb-4">
                     <label class="block text-gray-700 mb-2" for="position">Position</label>
-                    <input
+                    <select
                         id="position"
                         v-model="form.position"
-                        type="text"
                         class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+                    >
+                        <option value="" disabled>Select a position</option>
+                        <option value="support">Support</option>
+                        <option value="technician">Technician</option>
+                        <option value="manager">Manager</option>
+                    </select>
                     <div v-if="form.errors.position" class="text-red-500 text-sm mt-1">{{ form.errors.position }}</div>
+                </div>
+
+                <div v-if="form.position === 'technician'" class="mb-4">
+                    <label class="block text-gray-700 mb-2">Projects</label>
+                    <div class="space-y-2">
+                        <label v-for="project in page.props.projects" :key="project.id" class="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                :value="project.id"
+                                v-model="form.project_ids"
+                                class="rounded border-gray-300 text-blue-500 focus:ring-blue-500"
+                            />
+                            <span class="text-gray-700">{{ project.name }}</span>
+                        </label>
+                    </div>
+                    <div v-if="form.errors.project_ids" class="text-red-500 text-sm mt-1">{{ form.errors.project_ids }}</div>
                 </div>
 
                 <div class="mb-4">
