@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('company_id')->constrained()->onDelete('cascade');
             $table->string('name');
             $table->text('description')->nullable();
+            $table->string('email')->nullable();
             $table->enum('status', ['active', 'inactive', 'completed'])->default('active');
             $table->date('start_date')->nullable();
             $table->date('end_date')->nullable();

@@ -1,0 +1,10 @@
+{
+    "technical_notes": "status code 500 error when accessing the dashboard",
+    "environment": "Production - AWS EC2 t3.medium",
+    "browser": "Chrome 122.0.6261.94",
+    "operating_system": "Windows 11 Pro 23H2",
+    "steps_to_reproduce": null,
+    "expected_behavior": null,
+    "actual_behavior": null,
+    "resolution": null
+}
